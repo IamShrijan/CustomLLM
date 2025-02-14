@@ -1,6 +1,8 @@
 import os
 import glob
 import re
+import torch
+import torch.nn as nn
 
 # Define the path to the DataSet folder
 folder_path = 'DataSet'
@@ -52,13 +54,18 @@ class SimpleTokenizer:
     
 tokenizer = SimpleTokenizer(vocab)
 
-text1 = "Hello, do you like tea?"
+embedding_dim = 10
+embedding_layer = nn.Embedding(vocab_size,embedding_dim)# We Use embedding layer insteadof linear for computational efficiency.
+token_ids = torch.arange(vocab_size)
+embedding = embedding_layer(token_ids)
+torch.save(embedding, 'embeddings.pt')
+positional_encoding = nn.Embedding()
+'''text1 = "Hello, do you like tea?"
 text2 = "In the sunlit terraces of the palace."
-
 text = " <|endoftext|> ".join((text1, text2))
 
 print(text)
 token = tokenizer.encode(text)
 print(token)
 text = tokenizer.decode(token)
-print(text)
+print(text)'''
