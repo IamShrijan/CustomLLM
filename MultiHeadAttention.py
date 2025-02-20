@@ -1,12 +1,11 @@
 import torch.nn as nn
 import torch 
 import numpy as np
-import tiktoken
 
-class MultiHeadAttention(nn.modules):
+class MultiHeadAttention(nn.Module):
 
     def __init__(self, d_in, d_out, context_length, dropout, num_head, bias = False):
-
+        super().__init__()
         self.d_out = d_out 
         self.num_head = num_head
         self.context_length = context_length
@@ -28,9 +27,9 @@ class MultiHeadAttention(nn.modules):
         b, num_token, d_in = x.shape
 
 
-        keys = self.W_key
-        queries = self.W_query
-        values = self.W_value
+        keys = self.W_key(x)
+        queries = self.W_query(x)
+        values = self.W_value(x)
 
 
         keys = keys.view(b, num_token, self.num_head, self.d_out)
@@ -42,7 +41,7 @@ class MultiHeadAttention(nn.modules):
         queries = queries.transpose(1,2)
 
 
-        attention_score = queries @ keys.tranpose(2,3)
+        attention_score = queries @ keys.transpose(2,3)
         mask_bool = self.mask.bool()[:num_token,:num_token]
 
         attention_score.masked_fill(mask_bool, -torch.inf)
@@ -54,8 +53,7 @@ class MultiHeadAttention(nn.modules):
         context_vec = (attention_weights @ values).transpose(1, 2) 
         
         # Combine heads, where self.d_out = self.num_heads * self.head_dim
-        context_vec = context_vec.contiguous().view(b, self.num_head, self.d_out)
-        context_vec = self.out_proj(context_vec) # optional projection
+        context_vec = context_vec.contiguous().view(b, self.context_length, self.d_out*self.num_head)
 
         return context_vec
 
@@ -70,8 +68,8 @@ batch = torch.stack((inputs, inputs), dim=0)
 print(batch.shape) 
 
 batch_size, context_length, d_in = batch.shape
-d_out = 2
-mha = MultiHeadAttention(d_in, d_out, context_length, 0.0, num_heads=2)
+d_out = 3
+mha = MultiHeadAttention(d_in, d_out, context_length, 0.0, num_head=2)
 context_vecs = mha(batch)
 print(context_vecs)
 print("context_vecs.shape:", context_vecs.shape)
